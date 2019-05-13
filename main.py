@@ -102,8 +102,8 @@ class MatplotlibWidget(QMainWindow):
             if spinBox_year1.value() < year2:
                 year1 = spinBox_year1.value()
 
-        update_graph_PKB()
-        update_graph_engine()
+        self.update_graph_PKB()
+        self.update_graph_engine()
 
     def valuechange_year2(self):
 
@@ -113,10 +113,11 @@ class MatplotlibWidget(QMainWindow):
             if spinBox_year2.value() > year1:
                 year2 = spinBox_year2.value()
 
-        update_graph_PKB()
-        update_graph_engine()
+        self.update_graph_PKB()
+        self.update_graph_engine()
 
     def update_graph_PKB(self, country=country_PKB, year_start=year1, year_stop=year2):
+        country_PKB_data = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
         t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
 
         self.MplWidget_PKB.canvas.axes.clear()
@@ -127,9 +128,10 @@ class MatplotlibWidget(QMainWindow):
 
     def update_graph_engine(self, country=country_PKB, engine_type = type_of_engine, year_start=year1, year_stop=year2):
         # here im not sure of engine data structure
-        data = engine_data[country][engine_type]
-        # t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
 
+        # data = engine_data[country][engine_type]
+        t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
+        data = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
         self.MplWidget_engine.canvas.axes.clear()
         self.MplWidget_engine.canvas.axes.plot(t, data)
         self.MplWidget_engine.canvas.axes.legend(('year', 'amount of cars'), loc='upper right')

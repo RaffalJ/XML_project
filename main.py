@@ -20,26 +20,81 @@ class MatplotlibWidget(QMainWindow):
 
         loadUi("1.ui", self)
 
-        self.setWindowTitle("PyQt5 & Matplotlib Example GUI")
+        self.setWindowTitle("")
 
-        self.comboBox_country_PKB.currentIndexChanged.connect(self.selectionchange_PKB)
+        # Items need to be added in loop with addItem("") method from xml data when its added
         self.comboBox_country_PKB.addItems(["Kupa", "Dupa"])
-        self.addToolBar(NavigationToolbar(self.MplWidget.canvas, self))
+        self.comboBox_country_PKB.currentIndexChanged.connect(self.selectionchange_PKB)
 
-    def selectionchange_PKB(self, i):
-        countryPKB = i
+        self.comboBox_country_engines.addItems(["Kupa", "Dupa"])
+        self.comboBox_country_engines.currentIndexChanged.connect(self.selectionchange_eng_country)
+
+        self.comboBox_engine_type.addItems(["Kupa", "Dupa"])
+        self.comboBox_engine_type.currentIndexChanged.connect(self.selectionchange_eng_type)
+
+        self.spinBox_year1.valueChanged.connect(self.valuechange_year1)
+        self.spinBox_year2.valueChanged.connect(self.valuechange_year2)
+
+        self.addToolBar(NavigationToolbar(self.MplWidget_PKB.canvas, self))
+        self.addToolBar(NavigationToolbar(self.MplWidget_engine.canvas, self))
+
+    def selectionchange_PKB(self, index):
+        countryPKB = index
         update_graph_PKB()
 
-    def update_graph_PKB(self, country=country_PKB, year_start = year1, year_stop = year2):
+    def selectionchange_eng_country(self, index):
+        country_engine = index
+        update_graph_engine()
+
+    def selectionchange_eng_type(self, index):
+        type_of_engine = index
+        update_graph_engine()
+
+    def valuechange_year1(self):
+
+        if spinBox_year1.value() < 1990:
+            year1 = 1990
+        else:
+            if spinBox_year1.value() < year2:
+                year1 = spinBox_year1.value()
+
+        update_graph_PKB()
+        update_graph_engine()
+
+    def valuechange_year2(self):
+
+        if spinBox_year2.value() < 1990:
+            year2 = 1990
+        else:
+            if spinBox_year2.value() > year1:
+                year2 = spinBox_year2.value()
+
+        update_graph_PKB()
+        update_graph_engine()
+
+    def update_graph_PKB(self, country=country_PKB, year_start=year1, year_stop=year2):
 
         country_PKB_data = PKB_data[country]
         t = np.linspace(year_start, year_stop, 1)
 
-        self.MplWidget.canvas.axes.clear()
-        self.MplWidget.canvas.axes.plot(t, country_PKB_data)
-        self.MplWidget.canvas.axes.legend(('year', 'PKB'), loc='upper right')
-        self.MplWidget.canvas.axes.set_title('Country PKB')
-        self.MplWidget.canvas.draw()
+        self.MplWidget_PKB.canvas.axes.clear()
+        self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data)
+        self.MplWidget_PKB.canvas.axes.legend(('year', 'PKB'), loc='upper right')
+        self.MplWidget_PKB.canvas.axes.set_title('Country PKB')
+        self.MplWidget_PKB.canvas.draw()
+
+    def update_graph_engine(self, country=country_PKB, engine_type = type_of_engine, year_start=year1, year_stop=year2):
+
+        # here im not sure of engine data structure
+        data = engine_data[country][engine_type]
+        t = np.linspace(year_start, year_stop, 1)
+
+        self.MplWidget_engine.canvas.axes.clear()
+        self.MplWidget_engine.canvas.axes.plot(t, data)
+        self.MplWidget_engine.canvas.axes.legend(('year', 'amount of cars'), loc='upper right')
+        self.MplWidget_engine.canvas.axes.set_title('Cars bought by engine type')
+        self.MplWidget_engine.canvas.draw()
+
 
 
     # def update_graph(self):

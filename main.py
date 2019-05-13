@@ -17,6 +17,16 @@ engine_data = [1, 2, 3, 4, 5]
 CARMOT_URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/datastructure/ESTAT/DSD_road_eqr_carmot"
 url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ.DE+FR+IT?startPeriod=2010&endPeriod=2013"
 
+class Data:
+    def __init__(self, name):
+        self.name = name
+        self.years = []
+        self.values = []
+
+    def addEntry(self, year, value):
+        self.years.append(year)
+        self.values.append(value)
+
 class MatplotlibWidget(QMainWindow):
 
     def __init__(self):

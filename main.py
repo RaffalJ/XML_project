@@ -40,15 +40,15 @@ class MatplotlibWidget(QMainWindow):
 
     def selectionchange_PKB(self, index):
         countryPKB = index
-        update_graph_PKB()
+        self.update_graph_PKB()
 
     def selectionchange_eng_country(self, index):
         country_engine = index
-        update_graph_engine()
+        self.update_graph_engine()
 
     def selectionchange_eng_type(self, index):
         type_of_engine = index
-        update_graph_engine()
+        self.update_graph_engine()
 
     def valuechange_year1(self):
 

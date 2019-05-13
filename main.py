@@ -13,6 +13,10 @@ year1 = 1990
 year2 = 2014
 PKB_data = [1, 2, 3, 4, 5]
 engine_data = [1, 2, 3, 4, 5]
+
+CARMOT_URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/datastructure/ESTAT/DSD_road_eqr_carmot"
+url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ.DE+FR+IT?startPeriod=2010&endPeriod=2013"
+
 class MatplotlibWidget(QMainWindow):
 
     def __init__(self):
@@ -37,6 +41,46 @@ class MatplotlibWidget(QMainWindow):
 
         self.addToolBar(NavigationToolbar(self.MplWidget_PKB.canvas, self))
         self.addToolBar(NavigationToolbar(self.MplWidget_engine.canvas, self))
+
+    def parseDictionary(doc):
+        countries = []
+        iterator = 0
+        values = doc.get("message:GenericData").get("message:DataSet").get("generic:Series")
+        for value in values:
+            valuesArr = value.get("generic:SeriesKey").get("generic:Value")
+            for val in valuesArr:
+                if val.get("@id") == "GEO":
+                    countries.append(Data(val.get("@value")))
+            objs = value.get("generic:Obs")
+            for obj in objs:
+                countries[iterator].addEntry(obj.get("generic:ObsDimension").get("@value"), obj.get("generic:ObsValue").get("@value"))
+            iterator += 1
+        return countries
+
+    def assign_data():
+        # narazie example z poprzedniego
+        r = requests.get(url)
+
+        doc = xmltodict.parse(r.content)
+        countries = parseDictionary(doc)
+
+        country_values = []
+        for country in countries:
+            country_values.append(country.values)
+
+        data_list = []
+        for i in range(0, 3):
+            tmp_list = []
+            for x in country_values[i]:
+                tmp_list.append(float(x)/100)
+
+            data = []
+            data.append([10, 11, 12 ,13])
+            data.append(tmp_list)
+            data.append("Title")
+            data.append("x")
+            data.append("y")
+            data_list.append(data)
 
     def selectionchange_PKB(self, index):
         countryPKB = index
@@ -73,9 +117,7 @@ class MatplotlibWidget(QMainWindow):
         update_graph_engine()
 
     def update_graph_PKB(self, country=country_PKB, year_start=year1, year_stop=year2):
-
-        country_PKB_data = PKB_data[country]
-        t = np.linspace(year_start, year_stop, 1)
+        t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
 
         self.MplWidget_PKB.canvas.axes.clear()
         self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data)
@@ -84,10 +126,9 @@ class MatplotlibWidget(QMainWindow):
         self.MplWidget_PKB.canvas.draw()
 
     def update_graph_engine(self, country=country_PKB, engine_type = type_of_engine, year_start=year1, year_stop=year2):
-
         # here im not sure of engine data structure
         data = engine_data[country][engine_type]
-        t = np.linspace(year_start, year_stop, 1)
+        # t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
 
         self.MplWidget_engine.canvas.axes.clear()
         self.MplWidget_engine.canvas.axes.plot(t, data)

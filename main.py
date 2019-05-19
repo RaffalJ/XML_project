@@ -1,9 +1,13 @@
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
 import matplotlib
+
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as NavigationToolbar)
 
 import numpy as np
+import sys
+import requests
+import xmltodict
 import random
 
 country_PKB = 0
@@ -27,70 +31,86 @@ class Data:
         self.years.append(year)
         self.values.append(value)
 
+def parseDictionary(doc):
+    countries = []
+    iterator = 0
+    values = doc.get("message:GenericData").get("message:DataSet").get("generic:Series")
+    for value in values:
+        valuesArr = value.get("generic:SeriesKey").get("generic:Value")
+        for val in valuesArr:
+            if val.get("@id") == "GEO":
+                countries.append(Data(val.get("@value")))
+        objs = value.get("generic:Obs")
+        for obj in objs:
+            countries[iterator].addEntry(obj.get("generic:ObsDimension").get("@value"), obj.get("generic:ObsValue").get("@value"))
+        iterator += 1
+    return countries
+
+def assign_data():
+    # narazie example z poprzedniego
+    r = requests.get(url)
+
+    doc = xmltodict.parse(r.content)
+    countries = parseDictionary(doc)
+    return countries
+#     country_values = []
+#     for country in countries:
+#         country_values.append(country.values)
+#
+#     data_list = []
+#     for i in range(0, 3):
+#         tmp_list = []
+#         for x in country_values[i]:
+#             tmp_list.append(float(x)/100)
+#
+#         data = []
+#         data.append([10, 11, 12 ,13])
+#         data.append(tmp_list)
+#         data.append("Title")
+#         data.append("x")
+#         data.append("y")
+#         data_list.append(data)
+
 class MatplotlibWidget(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, data):
         QMainWindow.__init__(self)
 
         loadUi("1.ui", self)
 
         self.setWindowTitle("")
 
+        self.carMotData = data
+
         # Items need to be added in loop with addItem("") method from xml data when its added
-        self.comboBox_country_PKB.addItems(["Kupa", "Dupa"])
+        countries = []
+        for country in data:
+            countries.append(country.name)
+        self.comboBox_country_PKB.addItems(countries)
         self.comboBox_country_PKB.currentIndexChanged.connect(self.selectionchange_PKB)
 
-        self.comboBox_country_engines.addItems(["Kupa", "Dupa"])
+        self.comboBox_country_engines.addItems(countries)
         self.comboBox_country_engines.currentIndexChanged.connect(self.selectionchange_eng_country)
 
         self.comboBox_engine_type.addItems(["Kupa", "Dupa"])
         self.comboBox_engine_type.currentIndexChanged.connect(self.selectionchange_eng_type)
 
+        minYear = int(data[0].years[len(data[0].years)-1])
+        maxYear = int(data[0].years[0])
+
+        self.spinBox_year1.setMinimum(minYear)
+        self.spinBox_year1.setMaximum(maxYear + 1)
+        self.spinBox_year1.setValue(minYear)
         self.spinBox_year1.valueChanged.connect(self.valuechange_year1)
+
+        self.spinBox_year2.setMinimum(minYear)
+        self.spinBox_year2.setMaximum(maxYear + 1)
+        self.spinBox_year2.setValue(maxYear)
         self.spinBox_year2.valueChanged.connect(self.valuechange_year2)
 
         self.addToolBar(NavigationToolbar(self.MplWidget_PKB.canvas, self))
         self.addToolBar(NavigationToolbar(self.MplWidget_engine.canvas, self))
 
-    def parseDictionary(doc):
-        countries = []
-        iterator = 0
-        values = doc.get("message:GenericData").get("message:DataSet").get("generic:Series")
-        for value in values:
-            valuesArr = value.get("generic:SeriesKey").get("generic:Value")
-            for val in valuesArr:
-                if val.get("@id") == "GEO":
-                    countries.append(Data(val.get("@value")))
-            objs = value.get("generic:Obs")
-            for obj in objs:
-                countries[iterator].addEntry(obj.get("generic:ObsDimension").get("@value"), obj.get("generic:ObsValue").get("@value"))
-            iterator += 1
-        return countries
-
-    def assign_data():
-        # narazie example z poprzedniego
-        r = requests.get(url)
-
-        doc = xmltodict.parse(r.content)
-        countries = parseDictionary(doc)
-
-        country_values = []
-        for country in countries:
-            country_values.append(country.values)
-
-        data_list = []
-        for i in range(0, 3):
-            tmp_list = []
-            for x in country_values[i]:
-                tmp_list.append(float(x)/100)
-
-            data = []
-            data.append([10, 11, 12 ,13])
-            data.append(tmp_list)
-            data.append("Title")
-            data.append("x")
-            data.append("y")
-            data_list.append(data)
 
     def selectionchange_PKB(self, index):
         countryPKB = index
@@ -106,22 +126,22 @@ class MatplotlibWidget(QMainWindow):
 
     def valuechange_year1(self):
 
-        if spinBox_year1.value() < 1990:
+        if self.spinBox_year1.value() < 1990:
             year1 = 1990
         else:
-            if spinBox_year1.value() < year2:
-                year1 = spinBox_year1.value()
+            if self.spinBox_year1.value() < year2:
+                year1 = self.spinBox_year1.value()
 
         self.update_graph_PKB()
         self.update_graph_engine()
 
     def valuechange_year2(self):
 
-        if spinBox_year2.value() < 1990:
+        if self.spinBox_year2.value() < 1990:
             year2 = 1990
         else:
-            if spinBox_year2.value() > year1:
-                year2 = spinBox_year2.value()
+            if self.spinBox_year2.value() > year1:
+                year2 = self.spinBox_year2.value()
 
         self.update_graph_PKB()
         self.update_graph_engine()
@@ -167,8 +187,11 @@ class MatplotlibWidget(QMainWindow):
     #     self.MplWidget.canvas.axes.set_title('Cosinus - Sinus Signal')
     #     self.MplWidget.canvas.draw()
 
-
-app = QApplication([])
-window = MatplotlibWidget()
-window.show()
-app.exec_()
+def main():
+    app = QApplication([])
+    countries = assign_data()
+    window = MatplotlibWidget(countries)
+    window.show()
+    app.exec_()
+if __name__ == "__main__":
+    sys.exit(main())

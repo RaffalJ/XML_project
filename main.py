@@ -13,10 +13,12 @@ import random
 country_PKB = 0
 country_engine = 0
 type_of_engine = 0
+engine_data = [1, 2, 3, 4]
+
+# GLOBAL VARIABLES - FOR NOW
 year1 = 2000
 year2 = 2018
 PKB_data = []
-engine_data = [1, 2, 3, 4]
 countries = []
 
 CARMOT_URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/datastructure/ESTAT/DSD_road_eqr_carmot"

@@ -13,13 +13,14 @@ import random
 country_PKB = 0
 country_engine = 0
 type_of_engine = 0
-year1 = 1990
-year2 = 2014
-PKB_data = [1, 2, 3, 4, 5]
-engine_data = [1, 2, 3, 4, 5]
+year1 = 2000
+year2 = 2018
+PKB_data = []
+engine_data = [1, 2, 3, 4]
+countries = []
 
 CARMOT_URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/datastructure/ESTAT/DSD_road_eqr_carmot"
-url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ.DE+FR+IT?startPeriod=2010&endPeriod=2013"
+url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+"DE+FR+IT?startPeriod=2010&endPeriod=2013"
 
 class Data:
     def __init__(self, name):
@@ -46,57 +47,50 @@ def parseDictionary(doc):
         iterator += 1
     return countries
 
-def assign_data():
-    # narazie example z poprzedniego
+def get_pkb_values():
+    global year1, year2
+    start_year = year1
+    end_year = year2
+    countries = "DE+FR+IT"
+    url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+countries+"?startPeriod="+str(start_year)+"&endPeriod="+str(end_year)
     r = requests.get(url)
-
     doc = xmltodict.parse(r.content)
     countries = parseDictionary(doc)
     return countries
-#     country_values = []
-#     for country in countries:
-#         country_values.append(country.values)
-#
-#     data_list = []
-#     for i in range(0, 3):
-#         tmp_list = []
-#         for x in country_values[i]:
-#             tmp_list.append(float(x)/100)
-#
-#         data = []
-#         data.append([10, 11, 12 ,13])
-#         data.append(tmp_list)
-#         data.append("Title")
-#         data.append("x")
-#         data.append("y")
-#         data_list.append(data)
+
+def update_pkb_values():
+    global PKB_data, countries
+    PKB_data.clear()
+    data = get_pkb_values()
+    for country in data:
+        countries.append(country.name)
+        tmp_values = []
+        for value in country.values:
+            tmp_values.append(int(float(value))/1000)
+        PKB_data.append(tmp_values)
 
 class MatplotlibWidget(QMainWindow):
-
     def __init__(self, data):
+        global PKB_data, countries, year1, year2
         QMainWindow.__init__(self)
 
         loadUi("1.ui", self)
-
         self.setWindowTitle("")
-
         self.carMotData = data
 
-        # Items need to be added in loop with addItem("") method from xml data when its added
-        countries = []
-        for country in data:
-            countries.append(country.name)
+        update_pkb_values()
+
         self.comboBox_country_PKB.addItems(countries)
         self.comboBox_country_PKB.currentIndexChanged.connect(self.selectionchange_PKB)
 
         self.comboBox_country_engines.addItems(countries)
         self.comboBox_country_engines.currentIndexChanged.connect(self.selectionchange_eng_country)
 
-        self.comboBox_engine_type.addItems(["Kupa", "Dupa"])
+        self.comboBox_engine_type.addItems(["Diesel", "Benzine"])
         self.comboBox_engine_type.currentIndexChanged.connect(self.selectionchange_eng_type)
 
-        minYear = int(data[0].years[len(data[0].years)-1])
-        maxYear = int(data[0].years[0])
+        minYear = int(year1)
+        maxYear = int(year2)
 
         self.spinBox_year1.setMinimum(minYear)
         self.spinBox_year1.setMaximum(maxYear + 1)
@@ -111,6 +105,8 @@ class MatplotlibWidget(QMainWindow):
         self.addToolBar(NavigationToolbar(self.MplWidget_PKB.canvas, self))
         self.addToolBar(NavigationToolbar(self.MplWidget_engine.canvas, self))
 
+        self.update_graph_PKB()
+        self.update_graph_engine()
 
     def selectionchange_PKB(self, index):
         countryPKB = index
@@ -125,30 +121,39 @@ class MatplotlibWidget(QMainWindow):
         self.update_graph_engine()
 
     def valuechange_year1(self):
-
+        global year1
         if self.spinBox_year1.value() < 1990:
             year1 = 1990
         else:
             if self.spinBox_year1.value() < year2:
                 year1 = self.spinBox_year1.value()
 
+        update_pkb_values()
         self.update_graph_PKB()
         self.update_graph_engine()
 
     def valuechange_year2(self):
-
+        global year2
         if self.spinBox_year2.value() < 1990:
             year2 = 1990
         else:
             if self.spinBox_year2.value() > year1:
                 year2 = self.spinBox_year2.value()
 
+        update_pkb_values()
         self.update_graph_PKB()
         self.update_graph_engine()
 
-    def update_graph_PKB(self, country=country_PKB, year_start=year1, year_stop=year2):
-        country_PKB_data = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
+    def update_graph_PKB(self, country=country_PKB):
+        global year1, year2, PKB_data
+        year_start=year1
+        year_stop=year2
+
+        # narazie bierze 1 liste z PKB_data
+        country_PKB_data = PKB_data[0]
         t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
+        print(t)
+        print(PKB_data[0])
 
         self.MplWidget_PKB.canvas.axes.clear()
         self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data)
@@ -156,7 +161,10 @@ class MatplotlibWidget(QMainWindow):
         self.MplWidget_PKB.canvas.axes.set_title('Country PKB')
         self.MplWidget_PKB.canvas.draw()
 
-    def update_graph_engine(self, country=country_PKB, engine_type = type_of_engine, year_start=year1, year_stop=year2):
+    def update_graph_engine(self, country=country_PKB, engine_type = type_of_engine):
+        global year1, year2
+        year_start=year1
+        year_stop=year2
         # here im not sure of engine data structure
 
         # data = engine_data[country][engine_type]
@@ -168,30 +176,12 @@ class MatplotlibWidget(QMainWindow):
         self.MplWidget_engine.canvas.axes.set_title('Cars bought by engine type')
         self.MplWidget_engine.canvas.draw()
 
-
-
-    # def update_graph(self):
-    #     fs = 500
-    #     f = random.randint(1, 100)
-    #     ts = 1 / fs
-    #     length_of_signal = 100
-    #     t = np.linspace(0, 1, length_of_signal)
-    #
-    #     cosinus_signal = np.cos(2 * np.pi * f * t)
-    #     sinus_signal = np.sin(2 * np.pi * f * t)
-    #
-    #     self.MplWidget.canvas.axes.clear()
-    #     self.MplWidget.canvas.axes.plot(t, cosinus_signal)
-    #     self.MplWidget.canvas.axes.plot(t, sinus_signal)
-    #     self.MplWidget.canvas.axes.legend(('cosinus', 'sinus'), loc='upper right')
-    #     self.MplWidget.canvas.axes.set_title('Cosinus - Sinus Signal')
-    #     self.MplWidget.canvas.draw()
-
 def main():
+    global year1, year2, countries
     app = QApplication([])
-    countries = assign_data()
     window = MatplotlibWidget(countries)
     window.show()
     app.exec_()
+
 if __name__ == "__main__":
     sys.exit(main())

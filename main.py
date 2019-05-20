@@ -153,7 +153,11 @@ class MatplotlibWidget(QMainWindow):
 
         # narazie bierze 1 liste z PKB_data
         country_PKB_data = PKB_data[0]
-        t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
+        # t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
+        t = []
+        for i in range(year_start, year_stop+1):
+            t.append(i)
+
         print(t)
         print(PKB_data[0])
 

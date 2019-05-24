@@ -17,12 +17,12 @@ engine_data = [1, 2, 3, 4]
 
 # GLOBAL VARIABLES - FOR NOW
 year1 = 2000
-year2 = 2018
+year2 = 2013
 PKB_data = []
 countries = []
 
 CARMOT_URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/datastructure/ESTAT/DSD_road_eqr_carmot"
-url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+"DE+FR+IT?startPeriod=2010&endPeriod=2013"
+url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+"DE+FR+IT?startPeriod=2000&endPeriod=2013"
 
 class Data:
     def __init__(self, name):
@@ -136,8 +136,8 @@ class MatplotlibWidget(QMainWindow):
 
     def valuechange_year2(self):
         global year2
-        if self.spinBox_year2.value() < 1990:
-            year2 = 1990
+        if self.spinBox_year2.value() > 2018:
+            year2 = 2018
         else:
             if self.spinBox_year2.value() > year1:
                 year2 = self.spinBox_year2.value()
@@ -152,7 +152,7 @@ class MatplotlibWidget(QMainWindow):
         year_stop=year2
 
         # narazie bierze 1 liste z PKB_data
-        country_PKB_data = PKB_data[0]
+        country_PKB_data = PKB_data[self.comboBox_country_PKB.currentIndex()]
         # t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
         t = []
         for i in range(year_start, year_stop+1):
@@ -161,8 +161,15 @@ class MatplotlibWidget(QMainWindow):
         print(t)
         print(PKB_data[0])
 
+        locator = matplotlib.ticker.MultipleLocator(2)
+        formatter = matplotlib.ticker.StrMethodFormatter("{x:.0f}")
+
+
         self.MplWidget_PKB.canvas.axes.clear()
+
         self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data)
+        self.MplWidget_PKB.canvas.axes.xaxis.set_major_locator(locator)
+        self.MplWidget_PKB.canvas.axes.xaxis.set_major_formatter(formatter)
         self.MplWidget_PKB.canvas.axes.legend(('year', 'PKB'), loc='upper right')
         self.MplWidget_PKB.canvas.axes.set_title('Country PKB')
         self.MplWidget_PKB.canvas.draw()
@@ -174,10 +181,16 @@ class MatplotlibWidget(QMainWindow):
         # here im not sure of engine data structure
 
         # data = engine_data[country][engine_type]
+
+        locator = matplotlib.ticker.MultipleLocator(2)
+        formatter = matplotlib.ticker.StrMethodFormatter("{x:.0f}")
+
         t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
         data = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
         self.MplWidget_engine.canvas.axes.clear()
         self.MplWidget_engine.canvas.axes.plot(t, data)
+        self.MplWidget_engine.canvas.axes.xaxis.set_major_locator(locator)
+        self.MplWidget_engine.canvas.axes.xaxis.set_major_formatter(formatter)
         self.MplWidget_engine.canvas.axes.legend(('year', 'amount of cars'), loc='upper right')
         self.MplWidget_engine.canvas.axes.set_title('Cars bought by engine type')
         self.MplWidget_engine.canvas.draw()

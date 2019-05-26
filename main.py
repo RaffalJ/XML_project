@@ -1,5 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
+import time
+import os
 import matplotlib
 
 from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as NavigationToolbar)
@@ -109,6 +111,15 @@ class MatplotlibWidget(QMainWindow):
 
         self.update_graph_PKB()
         self.update_graph_engine()
+
+        self.pdfButton.clicked.connect(self.generate_pfd)
+
+    #will only work on unix, for convert look at README.md
+    def generate_pfd(self, ideself):
+        self.MplWidget_engine.grab().save("/tmp/engine.jpg")
+        self.MplWidget_PKB.grab().save("/tmp/pkb.jpg")
+        os.system("convert /tmp/engine.jpg /tmp/pkb.jpg raport.pdf")
+        print("generating pdgf")
 
     def selectionchange_PKB(self, index):
         countryPKB = index

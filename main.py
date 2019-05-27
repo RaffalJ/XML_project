@@ -182,7 +182,7 @@ class MatplotlibWidget(QMainWindow):
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_locator(locator)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_formatter(formatter)
         self.MplWidget_PKB.canvas.axes.legend(('year', 'PKB'), loc='upper right')
-        self.MplWidget_PKB.canvas.axes.set_title('Country PKB')
+        self.MplWidget_PKB.canvas.axes.set_title(self.comboBox_country_PKB.currentText() + ' PKB')
         self.MplWidget_PKB.canvas.draw()
 
     def update_graph_engine(self, country=country_PKB, engine_type = type_of_engine):
@@ -203,7 +203,7 @@ class MatplotlibWidget(QMainWindow):
         self.MplWidget_engine.canvas.axes.xaxis.set_major_locator(locator)
         self.MplWidget_engine.canvas.axes.xaxis.set_major_formatter(formatter)
         self.MplWidget_engine.canvas.axes.legend(('year', 'amount of cars'), loc='upper right')
-        self.MplWidget_engine.canvas.axes.set_title('Cars bought by engine type')
+        self.MplWidget_engine.canvas.axes.set_title(self.comboBox_engine_type.currentText() + ' cars bought in ' + self.comboBox_country_engines.currentText())
         self.MplWidget_engine.canvas.draw()
 
 def main():

@@ -116,9 +116,13 @@ class MatplotlibWidget(QMainWindow):
 
     #will only work on unix, for convert look at README.md
     def generate_pfd(self, ideself):
+        os.system("touch text.md")
+        os.system("echo \"\" > text.md")
+        os.system("echo \"## Report\" >> text.md")
+        os.system("markdown-pdf text.md")
         self.MplWidget_engine.grab().save("/tmp/engine.jpg")
         self.MplWidget_PKB.grab().save("/tmp/pkb.jpg")
-        os.system("convert /tmp/engine.jpg /tmp/pkb.jpg raport.pdf")
+        os.system("convert text.pdf /tmp/engine.jpg /tmp/pkb.jpg raport.pdf")
         print("generating pdgf")
 
     def selectionchange_PKB(self, index):

@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
+from PyQt5 import QtCore, QtGui
 import time
 import os
 import matplotlib
@@ -35,6 +36,12 @@ class Data:
     def addEntry(self, year, value):
         self.years.append(year)
         self.values.append(value)
+
+def getFont(size, bold):
+    font = QtGui.QFont()
+    font.setPointSize(size)
+    font.setBold(bold)
+    return font
 
 def parseDictionary(doc):
     countries = []
@@ -113,6 +120,9 @@ class MatplotlibWidget(QMainWindow):
         self.update_graph_engine()
 
         self.pdfButton.clicked.connect(self.generate_pfd)
+        self.labelTimeInterval.setFont(getFont(16, False))
+        self.labelMainTitle.setFont(getFont(24, True))
+        self.labelSubtitle.setFont(getFont(20, False))
 
     #will only work on unix, for convert look at README.md
     def generate_pfd(self, ideself):
@@ -168,20 +178,14 @@ class MatplotlibWidget(QMainWindow):
 
         # narazie bierze 1 liste z PKB_data
         country_PKB_data = PKB_data[self.comboBox_country_PKB.currentIndex()]
-        # t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
         t = []
         for i in range(year_start, year_stop+1):
             t.append(i)
 
-        print(t)
-        print(PKB_data[0])
-
         locator = matplotlib.ticker.MultipleLocator(2)
         formatter = matplotlib.ticker.StrMethodFormatter("{x:.0f}")
 
-
         self.MplWidget_PKB.canvas.axes.clear()
-
         self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_locator(locator)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_formatter(formatter)

@@ -25,7 +25,7 @@ PKB_data = []
 countries = []
 
 CARMOT_URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/datastructure/ESTAT/DSD_road_eqr_carmot"
-url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+"DE+FR+IT?startPeriod=2000&endPeriod=2013"
+url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+"DE+FR+IT+GR+PL?startPeriod=2000&endPeriod=2013"
 
 class Data:
     def __init__(self, name):
@@ -62,7 +62,7 @@ def get_pkb_values():
     global year1, year2
     start_year = year1
     end_year = year2
-    countries = "DE+FR+IT"
+    countries = "DE+FR+IT+PL+FR+ES"
     url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+countries+"?startPeriod="+str(start_year)+"&endPeriod="+str(end_year)
     r = requests.get(url)
     doc = xmltodict.parse(r.content)
@@ -93,6 +93,9 @@ class MatplotlibWidget(QMainWindow):
 
         self.comboBox_country_PKB.addItems(countries)
         self.comboBox_country_PKB.currentIndexChanged.connect(self.selectionchange_PKB)
+
+        self.comboBox_country_PKB_2.addItems(countries)
+        self.comboBox_country_PKB_2.currentIndexChanged.connect(self.selectionchange_PKB_2)
 
         self.comboBox_country_engines.addItems(countries)
         self.comboBox_country_engines.currentIndexChanged.connect(self.selectionchange_eng_country)
@@ -139,6 +142,10 @@ class MatplotlibWidget(QMainWindow):
         countryPKB = index
         self.update_graph_PKB()
 
+    def selectionchange_PKB_2(self, index):
+        countryPKB_2 = index
+        self.update_graph_PKB()
+
     def selectionchange_eng_country(self, index):
         country_engine = index
         self.update_graph_engine()
@@ -178,6 +185,7 @@ class MatplotlibWidget(QMainWindow):
 
         # narazie bierze 1 liste z PKB_data
         country_PKB_data = PKB_data[self.comboBox_country_PKB.currentIndex()]
+        country_PKB_data_2 = PKB_data[self.comboBox_country_PKB_2.currentIndex()]
         t = []
         for i in range(year_start, year_stop+1):
             t.append(i)
@@ -185,12 +193,16 @@ class MatplotlibWidget(QMainWindow):
         locator = matplotlib.ticker.MultipleLocator(2)
         formatter = matplotlib.ticker.StrMethodFormatter("{x:.0f}")
 
+        pkb_title1 = self.comboBox_country_PKB.currentText()
+        pkb_title2 = self.comboBox_country_PKB_2.currentText()
+
         self.MplWidget_PKB.canvas.axes.clear()
         self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data)
+        self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data_2)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_locator(locator)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_formatter(formatter)
-        self.MplWidget_PKB.canvas.axes.legend(('year', 'PKB'), loc='upper right')
-        self.MplWidget_PKB.canvas.axes.set_title(self.comboBox_country_PKB.currentText() + ' PKB')
+        self.MplWidget_PKB.canvas.axes.legend((pkb_title1 + ' PKB', pkb_title2 + ' PKB'), loc='upper right')
+        self.MplWidget_PKB.canvas.axes.set_title(pkb_title1 + ', ' + pkb_title2 + ' PKB')
         self.MplWidget_PKB.canvas.draw()
 
     def update_graph_engine(self, country=country_PKB, engine_type = type_of_engine):

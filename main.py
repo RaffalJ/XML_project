@@ -161,16 +161,18 @@ class MatplotlibWidget(QMainWindow):
         self.labelMainTitle.setFont(getFont(24, True))
         self.labelSubtitle.setFont(getFont(20, False))
 
-    #will only work on unix, for convert look at README.md
+     #will only work on unix, for convert look at README.md
     def generate_pfd(self, ideself):
-        os.system("touch text.md")
-        os.system("echo \"\" > text.md")
-        os.system("echo \"## Report\" >> text.md")
-        os.system("markdown-pdf text.md")
+        global year1, year2
+        os.system("touch /tmp/text.md")
+        os.system("echo \"\" > /tmp/text.md")
+        os.system("echo \"# Report\" >> /tmp/text.md")
+        os.system("echo \"## Genated for years:" + str(year1) + " - " + str(year2) + " \" >> /tmp/text.md")
+        os.system("echo \"## Countries in report: " + self.comboBox_country_engines.currentText() + ", " + self.comboBox_country_PKB.currentText() + ", " + self.comboBox_country_PKB_2.currentText() + " \" >> /tmp/text.md")
+        os.system("markdown-pdf /tmp/text.md")
         self.MplWidget_engine.grab().save("/tmp/engine.jpg")
         self.MplWidget_PKB.grab().save("/tmp/pkb.jpg")
-        os.system("convert text.pdf /tmp/engine.jpg /tmp/pkb.jpg raport.pdf")
-        print("generating pdgf")
+        os.system("convert /tmp/text.pdf /tmp/engine.jpg /tmp/pkb.jpg raport.pdf")
 
     def selectionchange_PKB(self, index):
         self.update_graph_PKB()

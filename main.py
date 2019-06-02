@@ -77,8 +77,8 @@ def get_pkb_values():
     url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+countries+"?startPeriod="+str(start_year)+"&endPeriod="+str(end_year)
     r = requests.get(url)
     doc = xmltodict.parse(r.content)
-    countries = parseDictionary(doc)
-    return countries
+    result = parseDictionary(doc)
+    return result
 
 def update_pkb_values():
     global PKB_data, countries
@@ -90,6 +90,26 @@ def update_pkb_values():
         for value in country.values:
             tmp_values.append(int(float(value))/1000)
         PKB_data.append(tmp_values)
+
+def get_engine_values():
+    global year1, year2
+
+    start_year = year1
+    end_year = year2
+    engine_type = 'PET'
+    engine_size = 'CC_GE2000'
+    countries = "DE+FR+IT+PL+FR+ES"
+    url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/..PET.CC_GE2000.DE+FR+IT+PL+FR+ES?startPeriod=2010&endPeriod=2015"
+
+    # url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/.."+engine_type+"."+engine_size+"."+countries+"?startPeriod="+str(start_year)+"&endPeriod="+str(end_year)
+    # print(url_engines)
+    # return url_engines
+
+    r = requests.get(url)
+    doc = xmltodict.parse(r.content)
+    result = parseDictionary(doc)
+    return result
+
 
 class MatplotlibWidget(QMainWindow):
     def __init__(self, data):
@@ -137,6 +157,8 @@ class MatplotlibWidget(QMainWindow):
         self.labelTimeInterval.setFont(getFont(16, False))
         self.labelMainTitle.setFont(getFont(24, True))
         self.labelSubtitle.setFont(getFont(20, False))
+
+        print(get_engine_values())
 
     #will only work on unix, for convert look at README.md
     def generate_pfd(self, ideself):

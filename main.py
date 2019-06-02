@@ -27,6 +27,17 @@ countries = []
 CARMOT_URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/datastructure/ESTAT/DSD_road_eqr_carmot"
 url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+"DE+FR+IT+GR+PL?startPeriod=2000&endPeriod=2013"
 
+# ENGINE TYPE: PET, DIE, TOTAL ( z total cos dziwne dane sciaga )
+engine_type = 'PET'
+
+# Engine size: CC_LT1400, CC1400-1999, CC_GE2000
+engine_size = 'CC_GE2000'
+
+# orginal
+# http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/..PET.CC_GE2000.DE+FR+IT+PL+FR+ES?startPeriod=2010&endPeriod=2015
+
+url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/.."+engine_type+"."+engine_size+".DE+FR+IT+PL+FR+ES?startPeriod=2010&endPeriod=2015"
+
 class Data:
     def __init__(self, name):
         self.name = name

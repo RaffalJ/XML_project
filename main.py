@@ -12,30 +12,25 @@ import sys
 import requests
 import xmltodict
 import random
-
-country_PKB = 0
-country_engine = 0
-type_of_engine = 0
-engine_data = [1, 2, 3, 4]
+import math
 
 # GLOBAL VARIABLES - FOR NOW
 year1 = 2000
 year2 = 2013
+countries_array = ['DE', 'ES', 'FR', 'IT', 'PL']
 PKB_data = []
-countries = []
+ENGINE_data= []
+engine_type = 'PET'
+engine_size = 'CC_GE2000'
+
+engine_type_array = ['PET', 'DIE']
+engine_size_array = ['CC_LT1400', 'CC1400-1999', 'CC_GE2000']
+
+# Engine size: CC_LT1400, CC1400-1999, CC_GE2000
+# ENGINE TYPE: PET, DIE, TOTAL ( z total cos dziwne dane sciaga )
 
 CARMOT_URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/datastructure/ESTAT/DSD_road_eqr_carmot"
 url = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/.CP_MEUR.B1GQ."+"DE+FR+IT+GR+PL?startPeriod=2000&endPeriod=2013"
-
-# ENGINE TYPE: PET, DIE, TOTAL ( z total cos dziwne dane sciaga )
-engine_type = 'PET'
-
-# Engine size: CC_LT1400, CC1400-1999, CC_GE2000
-engine_size = 'CC_GE2000'
-
-# orginal
-# http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/..PET.CC_GE2000.DE+FR+IT+PL+FR+ES?startPeriod=2010&endPeriod=2015
-
 url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/.."+engine_type+"."+engine_size+".DE+FR+IT+PL+FR+ES?startPeriod=2010&endPeriod=2015"
 
 class Data:
@@ -81,39 +76,44 @@ def get_pkb_values():
     return result
 
 def update_pkb_values():
-    global PKB_data, countries
+    global PKB_data
     PKB_data.clear()
     data = get_pkb_values()
     for country in data:
-        countries.append(country.name)
         tmp_values = []
         for value in country.values:
             tmp_values.append(int(float(value))/1000)
         PKB_data.append(tmp_values)
 
 def get_engine_values():
-    global year1, year2
-
+    global year1, year2, engine_type, engine_size
     start_year = year1
     end_year = year2
-    engine_type = 'PET'
-    engine_size = 'CC_GE2000'
     countries = "DE+FR+IT+PL+FR+ES"
-    url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/..PET.CC_GE2000.DE+FR+IT+PL+FR+ES?startPeriod=2010&endPeriod=2015"
-
-    # url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/.."+engine_type+"."+engine_size+"."+countries+"?startPeriod="+str(start_year)+"&endPeriod="+str(end_year)
-    # print(url_engines)
-    # return url_engines
-
-    r = requests.get(url)
+    url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/.."+engine_type+"."+"TOTAL"+"."+countries+"?startPeriod="+str(start_year)+"&endPeriod="+str(end_year)
+    r = requests.get(url_engines)
     doc = xmltodict.parse(r.content)
     result = parseDictionary(doc)
     return result
 
+def update_engine_values():
+    global ENGINE_data
+    ENGINE_data.clear()
+    data = get_engine_values()
+    for country in data:
+        tmp_values = []
+        for value in country.values:
+            tmp_value = 0
+            try:
+                tmp_value = float(value)
+            except ValueError:
+                tmp_value = 0
+            tmp_values.append(tmp_value/1000)
+        ENGINE_data.append(tmp_values)
 
 class MatplotlibWidget(QMainWindow):
     def __init__(self, data):
-        global PKB_data, countries, year1, year2
+        global PKB_data, countries_array, year1, year2, engine_type_array, engine_size_array
         QMainWindow.__init__(self)
 
         loadUi("1.ui", self)
@@ -121,17 +121,20 @@ class MatplotlibWidget(QMainWindow):
         self.carMotData = data
 
         update_pkb_values()
+        update_engine_values()
 
-        self.comboBox_country_PKB.addItems(countries)
+        self.comboBox_country_PKB.addItems(countries_array)
         self.comboBox_country_PKB.currentIndexChanged.connect(self.selectionchange_PKB)
-
-        self.comboBox_country_PKB_2.addItems(countries)
+        self.comboBox_country_PKB_2.addItems(countries_array)
         self.comboBox_country_PKB_2.currentIndexChanged.connect(self.selectionchange_PKB_2)
+        self.comboBox_country_PKB_2.setCurrentIndex(1)
 
-        self.comboBox_country_engines.addItems(countries)
+        self.comboBox_country_engines.addItems(countries_array)
         self.comboBox_country_engines.currentIndexChanged.connect(self.selectionchange_eng_country)
-
-        self.comboBox_engine_type.addItems(["Diesel", "Benzine"])
+        self.comboBox_country_engines_2.addItems(countries_array)
+        self.comboBox_country_engines_2.currentIndexChanged.connect(self.selectionchange_eng_country_2)
+        self.comboBox_country_engines_2.setCurrentIndex(1)
+        self.comboBox_engine_type.addItems(engine_type_array)
         self.comboBox_engine_type.currentIndexChanged.connect(self.selectionchange_eng_type)
 
         minYear = int(year1)
@@ -158,8 +161,6 @@ class MatplotlibWidget(QMainWindow):
         self.labelMainTitle.setFont(getFont(24, True))
         self.labelSubtitle.setFont(getFont(20, False))
 
-        print(get_engine_values())
-
     #will only work on unix, for convert look at README.md
     def generate_pfd(self, ideself):
         os.system("touch text.md")
@@ -172,19 +173,21 @@ class MatplotlibWidget(QMainWindow):
         print("generating pdgf")
 
     def selectionchange_PKB(self, index):
-        countryPKB = index
         self.update_graph_PKB()
 
     def selectionchange_PKB_2(self, index):
-        countryPKB_2 = index
         self.update_graph_PKB()
 
     def selectionchange_eng_country(self, index):
-        country_engine = index
+        self.update_graph_engine()
+
+    def selectionchange_eng_country_2(self, index):
         self.update_graph_engine()
 
     def selectionchange_eng_type(self, index):
-        type_of_engine = index
+        global engine_type, engine_type_array
+        engine_type = engine_type_array[index]
+        update_engine_values()
         self.update_graph_engine()
 
     def valuechange_year1(self):
@@ -195,6 +198,7 @@ class MatplotlibWidget(QMainWindow):
             if self.spinBox_year1.value() < year2:
                 year1 = self.spinBox_year1.value()
 
+        update_engine_values()
         update_pkb_values()
         self.update_graph_PKB()
         self.update_graph_engine()
@@ -207,62 +211,77 @@ class MatplotlibWidget(QMainWindow):
             if self.spinBox_year2.value() > year1:
                 year2 = self.spinBox_year2.value()
 
+        update_engine_values()
         update_pkb_values()
         self.update_graph_PKB()
         self.update_graph_engine()
 
-    def update_graph_PKB(self, country=country_PKB):
+    def update_graph_PKB(self):
         global year1, year2, PKB_data
         year_start=year1
         year_stop=year2
 
-        # narazie bierze 1 liste z PKB_data
         country_PKB_data = PKB_data[self.comboBox_country_PKB.currentIndex()]
         country_PKB_data_2 = PKB_data[self.comboBox_country_PKB_2.currentIndex()]
+        r_country_PKB_data = list(reversed(country_PKB_data))
+        r_country_PKB_data_2 = list(reversed(country_PKB_data_2))
+
         t = []
         for i in range(year_start, year_stop+1):
             t.append(i)
 
-        locator = matplotlib.ticker.MultipleLocator(2)
-        formatter = matplotlib.ticker.StrMethodFormatter("{x:.0f}")
-
         pkb_title1 = self.comboBox_country_PKB.currentText()
         pkb_title2 = self.comboBox_country_PKB_2.currentText()
 
+        locator = matplotlib.ticker.MultipleLocator(2)
+        formatter = matplotlib.ticker.StrMethodFormatter("{x:.0f}")
         self.MplWidget_PKB.canvas.axes.clear()
-        self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data)
-        self.MplWidget_PKB.canvas.axes.plot(t, country_PKB_data_2)
+        self.MplWidget_PKB.canvas.axes.plot(t, r_country_PKB_data)
+        self.MplWidget_PKB.canvas.axes.plot(t, r_country_PKB_data_2)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_locator(locator)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_formatter(formatter)
-        self.MplWidget_PKB.canvas.axes.legend((pkb_title1 + ' PKB', pkb_title2 + ' PKB'), loc='upper right')
+        self.MplWidget_PKB.canvas.axes.legend((pkb_title1, pkb_title2), loc='upper right')
         self.MplWidget_PKB.canvas.axes.set_title(pkb_title1 + ', ' + pkb_title2 + ' PKB')
         self.MplWidget_PKB.canvas.draw()
 
-    def update_graph_engine(self, country=country_PKB, engine_type = type_of_engine):
-        global year1, year2
+    def update_graph_engine(self):
+        global year1, year2, ENGINE_data
         year_start=year1
         year_stop=year2
-        # here im not sure of engine data structure
 
-        # data = engine_data[country][engine_type]
+        country_ENGINE_data = ENGINE_data[self.comboBox_country_engines.currentIndex()]
+        country_ENGINE_data_2 = ENGINE_data[self.comboBox_country_engines_2.currentIndex()]
+        r_country_ENGINE_data = list(reversed(country_ENGINE_data))
+        r_country_ENGINE_data_2 = list(reversed(country_ENGINE_data_2))
+        t = []
+        for i in range(year_start, year_stop+1):
+            t.append(i)
 
-        locator = matplotlib.ticker.MultipleLocator(2)
+        engine_title1 = self.comboBox_country_engines.currentText()
+        engine_title2 = self.comboBox_country_engines_2.currentText()
+
+        engine_type_title = ''
+        tmp_engine_type_title = self.comboBox_engine_type.currentText()
+        if tmp_engine_type_title == 'PET':
+            engine_type_title = 'Petroleum'
+        elif tmp_engine_type_title == 'DIE':
+            engine_type_title = 'Diesel'
+
         formatter = matplotlib.ticker.StrMethodFormatter("{x:.0f}")
-
-        t = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
-        data = np.linspace(year_start, year_stop, (year_stop - year_start) + 1)
+        locator = matplotlib.ticker.MultipleLocator(2)
         self.MplWidget_engine.canvas.axes.clear()
-        self.MplWidget_engine.canvas.axes.plot(t, data)
+        self.MplWidget_engine.canvas.axes.plot(t, r_country_ENGINE_data)
+        self.MplWidget_engine.canvas.axes.plot(t, r_country_ENGINE_data_2)
         self.MplWidget_engine.canvas.axes.xaxis.set_major_locator(locator)
         self.MplWidget_engine.canvas.axes.xaxis.set_major_formatter(formatter)
-        self.MplWidget_engine.canvas.axes.legend(('year', 'amount of cars'), loc='upper right')
-        self.MplWidget_engine.canvas.axes.set_title(self.comboBox_engine_type.currentText() + ' cars bought in ' + self.comboBox_country_engines.currentText())
+        self.MplWidget_engine.canvas.axes.legend((engine_title1, engine_title2), loc='upper right')
+        self.MplWidget_engine.canvas.axes.set_title(engine_type_title + ' cars bought in ' + engine_title1 + ', ' + engine_title2)
         self.MplWidget_engine.canvas.draw()
 
 def main():
-    global year1, year2, countries
+    global year1, year2, countries_array
     app = QApplication([])
-    window = MatplotlibWidget(countries)
+    window = MatplotlibWidget(countries_array)
     window.show()
     app.exec_()
 

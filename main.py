@@ -161,7 +161,6 @@ class MatplotlibWidget(QMainWindow):
         self.labelMainTitle.setFont(getFont(24, True))
         self.labelSubtitle.setFont(getFont(20, False))
 
-     #will only work on unix, for convert look at README.md
     def generate_pfd(self, ideself):
         global year1, year2
         os.system("touch /tmp/text.md")

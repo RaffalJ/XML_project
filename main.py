@@ -24,7 +24,9 @@ engine_type = 'PET'
 engine_size = 'CC_GE2000'
 
 engine_type_array = ['PET', 'DIE']
-engine_size_array = ['CC_LT1400', 'CC1400-1999', 'CC_GE2000']
+engine_type_array_nice_titles = ['Petroleum', 'Diesel']
+engine_size_array = ['CC_LT1400', 'CC1400-1999', 'CC_GE2000', 'TOTAL']
+engine_size_array_nice_titles = ['0 - 1400', '1400-1999', '2000 - 6000', 'Total']
 
 # Engine size: CC_LT1400, CC1400-1999, CC_GE2000
 # ENGINE TYPE: PET, DIE, TOTAL ( z total cos dziwne dane sciaga )
@@ -90,7 +92,7 @@ def get_engine_values():
     start_year = year1
     end_year = year2
     countries = "DE+FR+IT+PL+FR+ES"
-    url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/.."+engine_type+"."+"TOTAL"+"."+countries+"?startPeriod="+str(start_year)+"&endPeriod="+str(end_year)
+    url_engines = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/road_eqs_carmot/.."+engine_type+"."+engine_size+"."+countries+"?startPeriod="+str(start_year)+"&endPeriod="+str(end_year)
     r = requests.get(url_engines)
     doc = xmltodict.parse(r.content)
     result = parseDictionary(doc)
@@ -108,7 +110,7 @@ def update_engine_values():
                 tmp_value = float(value)
             except ValueError:
                 tmp_value = 0
-            tmp_values.append(tmp_value/1000)
+            tmp_values.append(tmp_value/10000)
         ENGINE_data.append(tmp_values)
 
 class MatplotlibWidget(QMainWindow):
@@ -134,8 +136,10 @@ class MatplotlibWidget(QMainWindow):
         self.comboBox_country_engines_2.addItems(countries_array)
         self.comboBox_country_engines_2.currentIndexChanged.connect(self.selectionchange_eng_country_2)
         self.comboBox_country_engines_2.setCurrentIndex(1)
-        self.comboBox_engine_type.addItems(engine_type_array)
+        self.comboBox_engine_type.addItems(engine_type_array_nice_titles)
         self.comboBox_engine_type.currentIndexChanged.connect(self.selectionchange_eng_type)
+        self.comboBox_engine_size.addItems(engine_size_array_nice_titles)
+        self.comboBox_engine_size.currentIndexChanged.connect(self.selectionchange_eng_size)
 
         minYear = int(year1)
         maxYear = int(year2)
@@ -191,6 +195,12 @@ class MatplotlibWidget(QMainWindow):
         update_engine_values()
         self.update_graph_engine()
 
+    def selectionchange_eng_size(self, index):
+        global engine_size, engine_size_array
+        engine_size = engine_size_array[index]
+        update_engine_values()
+        self.update_graph_engine()
+
     def valuechange_year1(self):
         global year1
         if self.spinBox_year1.value() < 1990:
@@ -241,6 +251,8 @@ class MatplotlibWidget(QMainWindow):
         self.MplWidget_PKB.canvas.axes.plot(t, r_country_PKB_data_2)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_locator(locator)
         self.MplWidget_PKB.canvas.axes.xaxis.set_major_formatter(formatter)
+        self.MplWidget_PKB.canvas.axes.set_xlabel('Years')
+        self.MplWidget_PKB.canvas.axes.set_ylabel('PKB (in thousands)')
         self.MplWidget_PKB.canvas.axes.legend((pkb_title1, pkb_title2), loc='upper right')
         self.MplWidget_PKB.canvas.axes.set_title(pkb_title1 + ', ' + pkb_title2 + ' PKB')
         self.MplWidget_PKB.canvas.draw()
@@ -262,11 +274,7 @@ class MatplotlibWidget(QMainWindow):
         engine_title2 = self.comboBox_country_engines_2.currentText()
 
         engine_type_title = ''
-        tmp_engine_type_title = self.comboBox_engine_type.currentText()
-        if tmp_engine_type_title == 'PET':
-            engine_type_title = 'Petroleum'
-        elif tmp_engine_type_title == 'DIE':
-            engine_type_title = 'Diesel'
+        engine_type_title = self.comboBox_engine_type.currentText()
 
         formatter = matplotlib.ticker.StrMethodFormatter("{x:.0f}")
         locator = matplotlib.ticker.MultipleLocator(2)
@@ -275,6 +283,8 @@ class MatplotlibWidget(QMainWindow):
         self.MplWidget_engine.canvas.axes.plot(t, r_country_ENGINE_data_2)
         self.MplWidget_engine.canvas.axes.xaxis.set_major_locator(locator)
         self.MplWidget_engine.canvas.axes.xaxis.set_major_formatter(formatter)
+        self.MplWidget_engine.canvas.axes.set_xlabel('Years')
+        self.MplWidget_engine.canvas.axes.set_ylabel('Cars (in ten thousands)')
         self.MplWidget_engine.canvas.axes.legend((engine_title1, engine_title2), loc='upper right')
         self.MplWidget_engine.canvas.axes.set_title(engine_type_title + ' cars bought in ' + engine_title1 + ', ' + engine_title2)
         self.MplWidget_engine.canvas.draw()
